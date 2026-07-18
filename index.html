@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Helios Solar — Paneles Solares | Cotiza tu ahorro en 2 minutos</title>
+<meta name="description" content="Cotiza paneles solares con imagen satelital de tu techo. Calcula tu ahorro real en CFE, recupera tu inversión en 3-4 años. Instalación certificada con garantía de 25 años.">
+<meta property="og:title" content="Helios Solar — Cotiza tu ahorro solar en 2 minutos">
+<meta property="og:description" content="Dibuja tu techo en el mapa satelital y descubre cuánto puedes ahorrar con paneles solares.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='30' fill='%23F59E0B'/><g stroke='%23F59E0B' stroke-width='6' stroke-linecap='round'><line x1='50' y1='4' x2='50' y2='16'/><line x1='50' y1='84' x2='50' y2='96'/><line x1='4' y1='50' x2='16' y2='50'/><line x1='84' y1='50' x2='96' y2='50'/><line x1='18' y1='18' x2='26' y2='26'/><line x1='74' y1='74' x2='82' y2='82'/><line x1='18' y1='82' x2='26' y2='74'/><line x1='74' y1='26' x2='82' y2='18'/></g></svg>">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --bg:#070B14;            /* fondo principal */
+  --bg-2:#0B1220;          /* superficie elevada */
+  --bg-3:#111B2E;          /* tarjetas */
+  --surface-glass:rgba(17,27,46,.62);
+  --border:rgba(148,163,184,.14);
+  --border-strong:rgba(148,163,184,.28);
+  --text:#F1F5F9;
+  --text-2:#B6C2D4;
+  --text-3:#7C8BA1;
+  --accent:#F59E0B;        /* ámbar solar */
+  --accent-2:#FBBF24;
+  --accent-deep:#D97706;
+  --accent-ink:#1A1206;    /* texto sobre ámbar */
+  --sky:#38BDF8;
+  --sky-deep:#0284C7;
+  --success:#34D399;
+  --danger:#F87171;
+  --wa:#25D366;
+  --chart-savings:#D97706;
+  --chart-invest:#0284C7;
+  --radius:16px;
+  --radius-lg:24px;
+  --space-1:8px; --space-2:16px; --space-3:24px; --space-4:32px; --space-5:48px; --space-6:64px; --space-7:96px;
+  --shadow-1:0 4px 20px rgba(0,0,0,.35);
+  --shadow-2:0 12px 48px rgba(0,0,0,.5);
+  --glow:0 0 40px rgba(245,158,11,.25);
+  --ease-out:cubic-bezier(.22,1,.36,1);
+  --font:'Inter',system-ui,-apple-system,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;font-size:16px}
+h1,h2,h3,h4{line-height:1.15;font-weight:800;letter-spacing:-.02em}
+.container{max-width:1200px;margin:0 auto;padding:0 var(--space-3)}
+section{position:relative}
+.num{font-variant-numeric:tabular-nums}
+::selection{background:var(--accent);color:var(--accent-ink)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:6px}
+
+/* ============ PRELOADER ============ */
+#preloader{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .5s var(--ease-out),visibility .5s}
+#preloader.hide{opacity:0;visibility:hidden}
+.pre-sun{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--accent-2),var(--accent-deep));box-shadow:var(--glow);animation:pulse-sun 1.2s ease-in-out infinite}
+@keyframes pulse-sun{0%,100%{transform:scale(1);box-shadow:0 0 30px rgba(245,158,11,.3)}50%{transform:scale(1.12);box-shadow:0 0 70px rgba(245,158,11,.55)}}
+#preloader p{color:var(--text-3);font-size:14px;letter-spacing:.2em;text-transform:uppercase}
+
+/* ============ SCROLL PROGRESS ============ */
+#scrollbar-progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--accent-deep),var(--accent-2));z-index:1001;transition:width .1s linear}
+
+/* ============ NAV ============ */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;transition:background .3s,border-color .3s,padding .3s}
+nav .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:18px var(--space-3);max-width:1200px;margin:0 auto;transition:padding .3s}
+nav.scrolled{background:rgba(7,11,20,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--border)}
+nav.scrolled .nav-inner{padding:12px var(--space-3)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:-.02em}
+.logo svg{width:32px;height:32px}
+.logo em{font-style:normal;color:var(--accent)}
+.nav-links{display:flex;gap:28px;align-items:center;list-style:none}
+.nav-links a{font-size:14.5px;font-weight:500;color:var(--text-2);transition:color .2s;position:relative;padding:6px 0}
+.nav-links a::after{content:'';position:absolute;left:0;bottom:0;width:0;height:2px;background:var(--accent);transition:width .25s var(--ease-out)}
+.nav-links a:hover{color:var(--text)}
+.nav-links a:hover::after{width:100%}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:15.5px;padding:14px 28px;border-radius:999px;transition:transform .2s var(--ease-out),box-shadow .25s,background .25s;cursor:pointer;min-height:48px;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--accent-2),var(--accent-deep));color:var(--accent-ink);box-shadow:0 6px 24px rgba(245,158,11,.35)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 34px rgba(245,158,11,.5)}
+.btn-ghost{border:1px solid var(--border-strong);color:var(--text);background:rgba(255,255,255,.03)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent-2);transform:translateY(-2px)}
+.btn-wa{background:var(--wa);color:#06281a;box-shadow:0 6px 24px rgba(37,211,102,.35)}
+.btn-wa:hover{transform:translateY(-2px);box-shadow:0 10px 34px rgba(37,211,102,.5)}
+.btn-sm{padding:10px 20px;font-size:14px;min-height:44px}
+.nav-cta{display:inline-flex}
+#hamburger{display:none;flex-direction:column;gap:5px;padding:10px;min-width:44px;min-height:44px;justify-content:center;align-items:center}
+#hamburger span{display:block;width:24px;height:2.5px;background:var(--text);border-radius:2px;transition:transform .3s var(--ease-out),opacity .3s}
+#hamburger.open span:nth-child(1){transform:translateY(7.5px) rotate(45deg)}
+#hamburger.open span:nth-child(2){opacity:0}
+#hamburger.open span:nth-child(3){transform:translateY(-7.5px) rotate(-45deg)}
+#mobile-menu{display:none;position:fixed;inset:0;top:0;background:rgba(7,11,20,.97);backdrop-filter:blur(20px);z-index:999;padding:110px var(--space-3) var(--space-3);flex-direction:column;gap:6px}
+#mobile-menu.open{display:flex}
+#mobile-menu a{font-size:22px;font-weight:700;padding:14px 8px;border-bottom:1px solid var(--border);color:var(--text-2)}
+#mobile-menu a:hover{color:var(--accent-2)}
+#mobile-menu .btn{margin-top:24px}
+
+/* ============ HERO ============ */
+#hero{min-height:100dvh;display:flex;align-items:center;padding:140px 0 80px;overflow:hidden}
+.hero-bg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hero-glow{position:absolute;width:900px;height:900px;border-radius:50%;top:-380px;right:-220px;background:radial-gradient(circle,rgba(245,158,11,.22),rgba(245,158,11,.05) 45%,transparent 70%);animation:drift 14s ease-in-out infinite alternate}
+.hero-glow-2{position:absolute;width:700px;height:700px;border-radius:50%;bottom:-320px;left:-260px;background:radial-gradient(circle,rgba(56,189,248,.14),transparent 65%);animation:drift 18s ease-in-out infinite alternate-reverse}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(-50px,40px) scale(1.08)}}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(148,163,184,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.05) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(ellipse 90% 70% at 50% 40%,black 30%,transparent 75%);-webkit-mask-image:radial-gradient(ellipse 90% 70% at 50% 40%,black 30%,transparent 75%)}
+.particle{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--accent-2);opacity:.5;animation:float-up linear infinite}
+@keyframes float-up{from{transform:translateY(20vh);opacity:0}12%{opacity:.55}88%{opacity:.4}to{transform:translateY(-105vh);opacity:0}}
+.hero-inner{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--space-6);align-items:center;position:relative}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;border:1px solid rgba(245,158,11,.35);background:rgba(245,158,11,.08);color:var(--accent-2);font-size:13.5px;font-weight:600;margin-bottom:var(--space-3)}
+.hero-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--success);animation:blink 1.8s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+#hero h1{font-size:clamp(38px,5.4vw,66px);margin-bottom:var(--space-3);font-weight:900}
+#hero h1 .grad{background:linear-gradient(100deg,var(--accent-2) 10%,var(--accent) 45%,#FDE68A 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-sub{font-size:clamp(17px,1.6vw,20px);color:var(--text-2);max-width:540px;margin-bottom:var(--space-4)}
+.hero-ctas{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:var(--space-5)}
+.hero-trust{display:flex;gap:28px;flex-wrap:wrap}
+.trust-item{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--text-2)}
+.trust-item svg{width:20px;height:20px;color:var(--success);flex-shrink:0}
+/* Hero visual: casa + paneles SVG animado */
+.hero-visual{position:relative;display:flex;justify-content:center}
+.hero-visual svg{width:100%;max-width:520px;height:auto;filter:drop-shadow(0 30px 60px rgba(0,0,0,.5))}
+.sun-core{transform-origin:390px 96px;animation:sun-spin 40s linear infinite}
+@keyframes sun-spin{to{transform:rotate(360deg)}}
+.energy-flow{stroke-dasharray:6 10;animation:flow 1.4s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-32}}
+.panel-shine{animation:shine 4s ease-in-out infinite}
+@keyframes shine{0%,100%{opacity:.15}50%{opacity:.55}}
+.hero-float-card{position:absolute;background:var(--surface-glass);backdrop-filter:blur(14px);border:1px solid var(--border-strong);border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow-1);animation:bob 5s ease-in-out infinite}
+.hero-float-card .lbl{font-size:11.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.hero-float-card .val{font-size:21px;font-weight:800;color:var(--accent-2)}
+.hfc-1{top:8%;left:-4%}
+.hfc-2{bottom:12%;right:-2%;animation-delay:-2.5s}
+.hfc-2 .val{color:var(--success)}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.scroll-hint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);color:var(--text-3);font-size:12px;letter-spacing:.15em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:8px}
+.scroll-hint::after{content:'';width:1.5px;height:34px;background:linear-gradient(var(--accent),transparent);animation:hint 1.8s ease-in-out infinite}
+@keyframes hint{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* ============ STATS BAR ============ */
+#stats{padding:var(--space-5) 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg-2)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3);text-align:center}
+.stat .stat-num{font-size:clamp(30px,3.4vw,44px);font-weight:900;color:var(--accent-2);letter-spacing:-.03em}
+.stat .stat-lbl{font-size:14px;color:var(--text-2);margin-top:4px}
+
+/* ============ MARQUEE ============ */
+#marquee{overflow:hidden;padding:22px 0;border-bottom:1px solid var(--border);background:var(--bg-2)}
+.marquee-track{display:flex;gap:56px;width:max-content;animation:marquee 30s linear infinite}
+#marquee:hover .marquee-track{animation-play-state:paused}
+@keyframes marquee{to{transform:translateX(-50%)}}
+.marquee-item{display:flex;align-items:center;gap:10px;color:var(--text-3);font-weight:600;font-size:14px;white-space:nowrap}
+.marquee-item svg{width:18px;height:18px;color:var(--accent)}
+
+/* ============ SECCIONES GENERALES ============ */
+.section{padding:var(--space-7) 0}
+.section-head{text-align:center;max-width:680px;margin:0 auto var(--space-6)}
+.kicker{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+.section-head h2{font-size:clamp(30px,4vw,46px);margin-bottom:16px}
+.section-head p{color:var(--text-2);font-size:17.5px}
+
+/* Reveal on scroll */
+.reveal{opacity:0;transform:translateY(36px);transition:opacity .7s var(--ease-out),transform .7s var(--ease-out)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-d1{transition-delay:.08s}.reveal-d2{transition-delay:.16s}.reveal-d3{transition-delay:.24s}.reveal-d4{transition-delay:.32s}.reveal-d5{transition-delay:.4s}
+
+/* ============ COTIZADOR ============ */
+#cotizador{background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(245,158,11,.07),transparent 60%),var(--bg)}
+.wizard{max-width:960px;margin:0 auto;background:var(--bg-2);border:1px solid var(--border-strong);border-radius:var(--radius-lg);box-shadow:var(--shadow-2);overflow:hidden}
+.wizard-steps{display:flex;border-bottom:1px solid var(--border);background:var(--bg-3)}
+.wstep{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;padding:18px 8px;font-size:13.5px;font-weight:600;color:var(--text-3);position:relative;transition:color .3s}
+.wstep .wnum{width:28px;height:28px;border-radius:50%;border:2px solid var(--border-strong);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;transition:all .3s;flex-shrink:0}
+.wstep.active{color:var(--text)}
+.wstep.active .wnum{border-color:var(--accent);background:var(--accent);color:var(--accent-ink);box-shadow:0 0 18px rgba(245,158,11,.45)}
+.wstep.done{color:var(--success)}
+.wstep.done .wnum{border-color:var(--success);background:rgba(52,211,153,.15);color:var(--success)}
+.wstep-label{display:inline}
+.wizard-body{padding:clamp(24px,4vw,48px)}
+.wpane{display:none;animation:pane-in .45s var(--ease-out)}
+.wpane.active{display:block}
+@keyframes pane-in{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
+.wpane h3{font-size:clamp(22px,2.6vw,30px);margin-bottom:8px}
+.wpane .wdesc{color:var(--text-2);margin-bottom:var(--space-4);font-size:15.5px}
+.wizard-nav{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-top:var(--space-4);border-top:1px solid var(--border);margin-top:var(--space-4)}
+
+/* Paso 1 */
+.field-label{display:block;font-size:14px;font-weight:600;color:var(--text-2);margin-bottom:10px}
+.bill-display{text-align:center;margin-bottom:var(--space-3)}
+.bill-display .bill-val{font-size:clamp(42px,6vw,64px);font-weight:900;color:var(--accent-2);letter-spacing:-.03em}
+.bill-display .bill-per{color:var(--text-3);font-size:15px}
+input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:8px;border-radius:99px;background:linear-gradient(90deg,var(--accent) var(--fill,30%),rgba(148,163,184,.2) var(--fill,30%));outline:none;cursor:pointer;margin:10px 0 6px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:var(--accent-2);border:4px solid var(--bg-2);box-shadow:0 2px 14px rgba(245,158,11,.6);cursor:grab;transition:transform .15s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--accent-2);border:4px solid var(--bg-2);box-shadow:0 2px 14px rgba(245,158,11,.6);cursor:grab}
+.range-labels{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-3);margin-bottom:var(--space-4)}
+.chip-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:var(--space-4)}
+.chip{padding:12px 20px;border-radius:999px;border:1.5px solid var(--border-strong);font-size:14px;font-weight:600;color:var(--text-2);transition:all .2s;min-height:46px}
+.chip:hover{border-color:var(--accent);color:var(--accent-2)}
+.chip.selected{background:rgba(245,158,11,.12);border-color:var(--accent);color:var(--accent-2);box-shadow:0 0 16px rgba(245,158,11,.18)}
+.chip small{display:block;font-weight:400;font-size:11px;color:var(--text-3)}
+.mini-estimate{display:flex;align-items:center;gap:14px;background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.25);border-radius:var(--radius);padding:16px 20px}
+.mini-estimate svg{width:26px;height:26px;color:var(--success);flex-shrink:0}
+.mini-estimate strong{color:var(--success)}
+
+/* Paso 2 - Mapa */
+.map-toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;position:relative}
+.map-search-wrap{flex:1;min-width:230px;position:relative}
+.map-search-wrap input{width:100%;padding:13px 16px 13px 46px;border-radius:12px;border:1.5px solid var(--border-strong);background:var(--bg-3);color:var(--text);outline:none;transition:border-color .2s}
+.map-search-wrap input:focus{border-color:var(--accent)}
+.map-search-wrap input::placeholder{color:var(--text-3)}
+.map-search-wrap .search-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);width:19px;height:19px;color:var(--text-3);pointer-events:none}
+.search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--bg-3);border:1px solid var(--border-strong);border-radius:12px;overflow:hidden;z-index:800;box-shadow:var(--shadow-2);display:none;max-height:240px;overflow-y:auto}
+.search-results.open{display:block}
+.search-results button{display:block;width:100%;text-align:left;padding:12px 16px;font-size:13.5px;color:var(--text-2);border-bottom:1px solid var(--border);transition:background .15s}
+.search-results button:last-child{border-bottom:none}
+.search-results button:hover{background:rgba(245,158,11,.08);color:var(--text)}
+#map{height:420px;border-radius:var(--radius);border:1.5px solid var(--border-strong);z-index:1;background:#0d1522}
+.map-hint{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--text-2);background:rgba(56,189,248,.07);border:1px solid rgba(56,189,248,.25);border-radius:12px;padding:12px 16px;margin-top:14px}
+.map-hint svg{width:20px;height:20px;color:var(--sky);flex-shrink:0}
+.map-stats{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap}
+.map-stat{flex:1;min-width:150px;background:var(--bg-3);border:1px solid var(--border);border-radius:12px;padding:14px 18px}
+.map-stat .lbl{font-size:11.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.map-stat .val{font-size:22px;font-weight:800;color:var(--text)}
+.map-stat.ok .val{color:var(--success)}
+.map-stat.warn .val{color:var(--danger)}
+.leaflet-container{font-family:var(--font)}
+.draw-vertex{background:var(--accent-2);border:2.5px solid #fff;border-radius:50%;box-shadow:0 1px 8px rgba(0,0,0,.6)}
+
+/* Paso 3 - Resultados */
+.results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:var(--space-4)}
+.result-card{background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius);padding:22px;transition:transform .25s var(--ease-out),border-color .25s,box-shadow .25s;position:relative;overflow:hidden}
+.result-card:hover{transform:translateY(-4px);border-color:rgba(245,158,11,.4);box-shadow:var(--shadow-1)}
+.result-card.featured{background:linear-gradient(145deg,rgba(245,158,11,.14),rgba(245,158,11,.04));border-color:rgba(245,158,11,.45)}
+.result-card .ic{width:40px;height:40px;border-radius:11px;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.result-card .ic svg{width:22px;height:22px;color:var(--accent-2)}
+.result-card .rlbl{font-size:12.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.result-card .rval{font-size:clamp(22px,2.4vw,30px);font-weight:900;letter-spacing:-.02em;margin-top:2px}
+.result-card .rsub{font-size:13px;color:var(--text-2);margin-top:4px}
+.result-card.featured .rval{color:var(--accent-2)}
+.env-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:var(--space-4)}
+.env-pill{display:flex;align-items:center;gap:10px;background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.22);border-radius:999px;padding:10px 18px;font-size:13.5px;color:var(--text-2)}
+.env-pill svg{width:18px;height:18px;color:var(--success);flex-shrink:0}
+.env-pill strong{color:var(--success)}
+/* Gráfica */
+.chart-card{background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+.chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+.chart-head h4{font-size:17px;font-weight:700}
+.chart-head p{font-size:13px;color:var(--text-3)}
+.chart-legend{display:flex;gap:18px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2)}
+.legend-swatch{width:14px;height:14px;border-radius:4px;flex-shrink:0}
+.chart-wrap{position:relative;margin-top:10px}
+#savingsChart{width:100%;height:auto;display:block;touch-action:pan-y}
+.chart-tooltip{position:absolute;pointer-events:none;background:var(--bg-2);border:1px solid var(--border-strong);border-radius:10px;padding:10px 14px;font-size:12.5px;box-shadow:var(--shadow-2);opacity:0;transition:opacity .15s;z-index:5;min-width:170px}
+.chart-tooltip .tt-year{font-weight:700;color:var(--text);margin-bottom:4px}
+.chart-tooltip .tt-row{display:flex;justify-content:space-between;gap:14px;color:var(--text-2)}
+.chart-tooltip .tt-row b{color:var(--text)}
+.disclaimer{font-size:12px;color:var(--text-3);margin-top:14px;line-height:1.5}
+
+/* Paso 4 - Contacto */
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:var(--space-3)}
+.form-field{display:flex;flex-direction:column;gap:8px}
+.form-field label{font-size:13.5px;font-weight:600;color:var(--text-2)}
+.form-field label .req{color:var(--accent)}
+.form-field input,.form-field select{padding:14px 16px;border-radius:12px;border:1.5px solid var(--border-strong);background:var(--bg-3);color:var(--text);outline:none;transition:border-color .2s;min-height:50px}
+.form-field input:focus,.form-field select:focus{border-color:var(--accent)}
+.form-field input::placeholder{color:var(--text-3)}
+.form-field .err{font-size:12.5px;color:var(--danger);display:none}
+.form-field.invalid input{border-color:var(--danger)}
+.form-field.invalid .err{display:block}
+.quote-summary{background:var(--bg-3);border:1px dashed var(--border-strong);border-radius:var(--radius);padding:20px 24px;margin-bottom:var(--space-3)}
+.quote-summary h4{font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:12px}
+.qs-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--border);font-size:14.5px}
+.qs-row:last-child{border-bottom:none}
+.qs-row span{color:var(--text-2)}
+.qs-row b{color:var(--text)}
+.qs-row.hl b{color:var(--accent-2)}
+.final-ctas{display:flex;gap:14px;flex-wrap:wrap}
+.final-ctas .btn{flex:1;min-width:220px}
+
+/* ============ BENEFICIOS ============ */
+.benefits-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.benefit{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px 28px;transition:transform .3s var(--ease-out),border-color .3s,box-shadow .3s;position:relative;overflow:hidden}
+.benefit::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity .3s}
+.benefit:hover{transform:translateY(-6px);border-color:rgba(245,158,11,.35);box-shadow:var(--shadow-1)}
+.benefit:hover::before{opacity:1}
+.benefit .b-icon{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,rgba(245,158,11,.18),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.25);display:flex;align-items:center;justify-content:center;margin-bottom:20px;transition:transform .3s var(--ease-out)}
+.benefit:hover .b-icon{transform:scale(1.1) rotate(-4deg)}
+.benefit .b-icon svg{width:26px;height:26px;color:var(--accent-2)}
+.benefit h3{font-size:19px;margin-bottom:10px}
+.benefit p{font-size:14.5px;color:var(--text-2)}
+
+/* ============ PROCESO ============ */
+#proceso{background:var(--bg-2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.timeline{max-width:760px;margin:0 auto;position:relative}
+.timeline::before{content:'';position:absolute;left:27px;top:10px;bottom:10px;width:2px;background:linear-gradient(var(--accent),rgba(245,158,11,.1))}
+.tl-item{display:flex;gap:26px;padding-bottom:var(--space-5);position:relative}
+.tl-item:last-child{padding-bottom:0}
+.tl-num{width:56px;height:56px;border-radius:50%;background:var(--bg-3);border:2px solid var(--accent);color:var(--accent-2);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:19px;flex-shrink:0;position:relative;z-index:2;box-shadow:0 0 0 6px var(--bg-2)}
+.tl-body h3{font-size:19px;margin-bottom:6px}
+.tl-body p{color:var(--text-2);font-size:14.5px}
+.tl-body .tl-time{display:inline-block;margin-top:8px;font-size:12px;font-weight:700;color:var(--sky);background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.25);padding:4px 12px;border-radius:999px}
+
+/* ============ FINANCIAMIENTO ============ */
+.fin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
+.fin-card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:36px 30px;display:flex;flex-direction:column;transition:transform .3s var(--ease-out),border-color .3s,box-shadow .3s;position:relative}
+.fin-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-1)}
+.fin-card.popular{border-color:var(--accent);background:linear-gradient(160deg,rgba(245,158,11,.1),var(--bg-2) 55%)}
+.fin-tag{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent-2),var(--accent-deep));color:var(--accent-ink);font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:6px 16px;border-radius:999px;white-space:nowrap}
+.fin-card h3{font-size:21px;margin-bottom:6px}
+.fin-card .fin-sub{font-size:13.5px;color:var(--text-3);margin-bottom:18px}
+.fin-card .fin-big{font-size:34px;font-weight:900;color:var(--accent-2);letter-spacing:-.02em;margin-bottom:20px}
+.fin-card .fin-big small{font-size:14px;color:var(--text-3);font-weight:500}
+.fin-card ul{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:26px;flex:1}
+.fin-card li{display:flex;gap:10px;font-size:14px;color:var(--text-2);align-items:flex-start}
+.fin-card li svg{width:18px;height:18px;color:var(--success);flex-shrink:0;margin-top:2px}
+
+/* ============ TESTIMONIOS ============ */
+#testimonios{background:var(--bg-2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden}
+.testi-viewport{overflow:hidden;max-width:820px;margin:0 auto}
+.testi-track{display:flex;transition:transform .6s var(--ease-out)}
+.testi{flex:0 0 100%;padding:0 var(--space-2)}
+.testi-card{background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:38px;text-align:center}
+.stars{display:flex;gap:4px;justify-content:center;margin-bottom:18px}
+.stars svg{width:20px;height:20px;color:var(--accent-2)}
+.testi-quote{font-size:clamp(16px,1.8vw,19px);color:var(--text);font-weight:500;margin-bottom:24px;line-height:1.65}
+.testi-person{display:flex;align-items:center;justify-content:center;gap:14px}
+.testi-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-deep));color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px}
+.testi-person .tp-name{font-weight:700;font-size:15px;text-align:left}
+.testi-person .tp-meta{font-size:12.5px;color:var(--text-3);text-align:left}
+.testi-person .tp-save{color:var(--success);font-weight:700}
+.testi-nav{display:flex;justify-content:center;align-items:center;gap:18px;margin-top:var(--space-4)}
+.testi-dots{display:flex;gap:8px}
+.testi-dot{width:9px;height:9px;border-radius:99px;background:rgba(148,163,184,.3);transition:all .3s;padding:0;min-width:9px;min-height:9px}
+.testi-dot.active{width:26px;background:var(--accent)}
+.testi-arrow{width:46px;height:46px;border-radius:50%;border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;color:var(--text-2);transition:all .2s}
+.testi-arrow:hover{border-color:var(--accent);color:var(--accent-2)}
+.testi-arrow svg{width:20px;height:20px}
+
+/* ============ FAQ ============ */
+.faq-list{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.faq-item{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .25s}
+.faq-item.open{border-color:rgba(245,158,11,.4)}
+.faq-q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px 26px;font-size:16px;font-weight:700;text-align:left;color:var(--text);min-height:48px}
+.faq-q .faq-icon{width:26px;height:26px;flex-shrink:0;color:var(--accent);transition:transform .3s var(--ease-out)}
+.faq-item.open .faq-icon{transform:rotate(45deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .4s var(--ease-out)}
+.faq-a p{padding:0 26px 22px;color:var(--text-2);font-size:14.5px}
+
+/* ============ CTA FINAL ============ */
+#cta-final .cta-box{background:linear-gradient(135deg,rgba(245,158,11,.16),rgba(217,119,6,.06)),var(--bg-2);border:1px solid rgba(245,158,11,.4);border-radius:calc(var(--radius-lg) + 8px);padding:clamp(40px,6vw,72px);text-align:center;position:relative;overflow:hidden}
+#cta-final .cta-box::before{content:'';position:absolute;width:500px;height:500px;border-radius:50%;top:-300px;left:50%;transform:translateX(-50%);background:radial-gradient(circle,rgba(245,158,11,.25),transparent 70%);pointer-events:none}
+#cta-final h2{font-size:clamp(28px,4vw,44px);margin-bottom:14px;position:relative}
+#cta-final p{color:var(--text-2);font-size:17px;max-width:520px;margin:0 auto var(--space-4);position:relative}
+#cta-final .hero-ctas{justify-content:center;margin-bottom:0;position:relative}
+
+/* ============ FOOTER ============ */
+footer{border-top:1px solid var(--border);background:var(--bg-2);padding:var(--space-6) 0 var(--space-3)}
+.footer-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1.2fr;gap:var(--space-5);margin-bottom:var(--space-5)}
+.footer-col h4{font-size:14px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3);margin-bottom:18px;font-weight:700}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:12px}
+.footer-col a{color:var(--text-2);font-size:14.5px;transition:color .2s}
+.footer-col a:hover{color:var(--accent-2)}
+.footer-desc{color:var(--text-2);font-size:14.5px;margin:16px 0 22px;max-width:300px}
+.socials{display:flex;gap:12px;flex-wrap:wrap}
+.social-btn{width:44px;height:44px;border-radius:12px;border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;color:var(--text-2);transition:all .25s var(--ease-out)}
+.social-btn:hover{transform:translateY(-4px);border-color:var(--accent);color:var(--accent-2);box-shadow:0 8px 20px rgba(245,158,11,.2)}
+.social-btn svg{width:20px;height:20px}
+.footer-contact li{display:flex;gap:12px;align-items:flex-start;color:var(--text-2);font-size:14.5px}
+.footer-contact svg{width:18px;height:18px;color:var(--accent);flex-shrink:0;margin-top:3px}
+.footer-bottom{border-top:1px solid var(--border);padding-top:var(--space-3);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--text-3)}
+
+/* ============ WHATSAPP FLOAT ============ */
+#wa-float{position:fixed;bottom:24px;right:24px;z-index:950;display:flex;align-items:center;gap:12px;flex-direction:row-reverse}
+#wa-btn{width:62px;height:62px;border-radius:50%;background:var(--wa);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 30px rgba(37,211,102,.45);transition:transform .25s var(--ease-out);position:relative}
+#wa-btn:hover{transform:scale(1.1)}
+#wa-btn svg{width:32px;height:32px;color:#fff}
+#wa-btn::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid var(--wa);animation:wa-ring 2s ease-out infinite}
+@keyframes wa-ring{from{transform:scale(1);opacity:.8}to{transform:scale(1.65);opacity:0}}
+#wa-bubble{background:#fff;color:#0f172a;font-size:13.5px;font-weight:600;padding:12px 18px;border-radius:16px 16px 4px 16px;box-shadow:var(--shadow-2);max-width:220px;opacity:0;transform:translateY(8px);transition:opacity .4s,transform .4s;pointer-events:none}
+#wa-bubble.show{opacity:1;transform:translateY(0)}
+
+/* Sticky CTA móvil */
+#sticky-cta{position:fixed;bottom:0;left:0;right:0;z-index:940;background:rgba(7,11,20,.92);backdrop-filter:blur(16px);border-top:1px solid var(--border-strong);padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:none;transform:translateY(110%);transition:transform .4s var(--ease-out)}
+#sticky-cta.show{transform:translateY(0)}
+#sticky-cta .btn{width:100%}
+
+/* ============ RESPONSIVE ============ */
+@media(max-width:1024px){
+  .hero-inner{grid-template-columns:1fr;text-align:center}
+  .hero-sub{margin-left:auto;margin-right:auto}
+  .hero-ctas,.hero-trust{justify-content:center}
+  .hero-visual{order:-1;margin-bottom:var(--space-2)}
+  .hero-visual svg{max-width:380px}
+  .hfc-1{left:2%}
+  .hfc-2{right:2%}
+  .benefits-grid,.fin-grid,.results-grid{grid-template-columns:repeat(2,1fr)}
+  .footer-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:768px){
+  .nav-links,.nav-cta{display:none}
+  #hamburger{display:flex}
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:var(--space-4) var(--space-2)}
+  .wstep-label{display:none}
+  .wstep{padding:16px 4px}
+  .benefits-grid,.fin-grid,.results-grid,.contact-grid,.footer-grid{grid-template-columns:1fr}
+  #map{height:330px}
+  .hero-float-card{display:none}
+  #wa-bubble{display:none}
+  #sticky-cta{display:block}
+  #wa-float{bottom:88px}
+  .section{padding:var(--space-6) 0}
+  .final-ctas .btn{min-width:100%}
+}
+/* ============ REDUCED MOTION ============ */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  html{scroll-behavior:auto}
+  .reveal{opacity:1;transform:none}
+}
+/* ============ PRINT (descargar cotización) ============ */
+@media print{
+  body{background:#fff;color:#0f172a}
+  nav,#wa-float,#sticky-cta,footer,#hero,#stats,#marquee,#beneficios,#proceso,#financiamiento,#testimonios,#faq,#cta-final,.wizard-steps,.wizard-nav,.final-ctas,#preloader,#scrollbar-progress{display:none!important}
+  .wizard{border:none;box-shadow:none;background:#fff}
+  .wpane{display:block!important}
+  #pane-1,#pane-2{display:none!important}
+  .result-card,.chart-card,.quote-summary{background:#fff;border:1px solid #cbd5e1;color:#0f172a}
+  .result-card .rval,.qs-row b{color:#0f172a}
+  .section{padding:20px 0}
+}
+</style>
+</head>
+<body>
+
+<!-- PRELOADER -->
+<div id="preloader" aria-hidden="true">
+  <div class="pre-sun"></div>
+  <p>Cargando energía…</p>
+</div>
+
+<div id="scrollbar-progress" aria-hidden="true"></div>
+
+<!-- ============ NAV ============ -->
+<nav id="nav" aria-label="Navegación principal">
+  <div class="nav-inner">
+    <a href="#hero" class="logo" aria-label="Helios Solar — inicio">
+      <svg viewBox="0 0 100 100" fill="none" aria-hidden="true"><circle cx="50" cy="50" r="26" fill="url(#lg)"/><g stroke="#F59E0B" stroke-width="7" stroke-linecap="round"><line x1="50" y1="6" x2="50" y2="18"/><line x1="50" y1="82" x2="50" y2="94"/><line x1="6" y1="50" x2="18" y2="50"/><line x1="82" y1="50" x2="94" y2="50"/><line x1="19" y1="19" x2="27" y2="27"/><line x1="73" y1="73" x2="81" y2="81"/><line x1="19" y1="81" x2="27" y2="73"/><line x1="73" y1="27" x2="81" y2="19"/></g><defs><linearGradient id="lg" x1="24" y1="24" x2="76" y2="76"><stop stop-color="#FBBF24"/><stop offset="1" stop-color="#D97706"/></linearGradient></defs></svg>
+      Helios<em>Solar</em>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#cotizador">Cotizador</a></li>
+      <li><a href="#beneficios">Beneficios</a></li>
+      <li><a href="#proceso">Proceso</a></li>
+      <li><a href="#financiamiento">Financiamiento</a></li>
+      <li><a href="#testimonios">Clientes</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <a href="#cotizador" class="btn btn-primary btn-sm nav-cta">Cotizar gratis</a>
+    <button id="hamburger" aria-label="Abrir menú" aria-expanded="false"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div id="mobile-menu">
+  <a href="#cotizador">Cotizador</a>
+  <a href="#beneficios">Beneficios</a>
+  <a href="#proceso">Proceso</a>
+  <a href="#financiamiento">Financiamiento</a>
+  <a href="#testimonios">Clientes</a>
+  <a href="#faq">FAQ</a>
+  <a href="#cotizador" class="btn btn-primary">Cotizar gratis</a>
+</div>
+
+<!-- ============ HERO ============ -->
+<section id="hero">
+  <div class="hero-bg" aria-hidden="true">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-glow-2"></div>
+    <div id="particles"></div>
+  </div>
+  <div class="container hero-inner">
+    <div>
+      <span class="hero-badge reveal"><span class="dot"></span> Cotización satelital gratuita · Sin compromiso</span>
+      <h1 class="reveal reveal-d1">Deja de rentar tu energía. <span class="grad">Sé dueño del sol.</span></h1>
+      <p class="hero-sub reveal reveal-d2">Dibuja tu techo en el mapa satelital y en <strong>2 minutos</strong> conoce cuántos paneles necesitas, cuánto cuesta y cuánto ahorrarás en CFE los próximos 25 años.</p>
+      <div class="hero-ctas reveal reveal-d3">
+        <a href="#cotizador" class="btn btn-primary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="4" x2="9" y2="20"/></svg>
+          Calcular mi ahorro
+        </a>
+        <button class="btn btn-wa" data-wa="hero">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.297-.497.1-.198.05-.371-.025-.52-.074-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Hablar con un asesor
+        </button>
+      </div>
+      <div class="hero-trust reveal reveal-d4">
+        <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg> Garantía 25 años</span>
+        <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Instalación en 1 día</span>
+        <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg> Certificados FIDE</span>
+      </div>
+    </div>
+    <div class="hero-visual reveal reveal-d2">
+      <svg viewBox="0 0 520 420" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustración de casa con paneles solares y sol">
+        <!-- sol -->
+        <g class="sun-core">
+          <circle cx="390" cy="96" r="38" fill="url(#sunGrad)"/>
+          <g stroke="#FBBF24" stroke-width="5" stroke-linecap="round" opacity=".85">
+            <line x1="390" y1="34" x2="390" y2="48"/><line x1="390" y1="144" x2="390" y2="158"/>
+            <line x1="328" y1="96" x2="342" y2="96"/><line x1="438" y1="96" x2="452" y2="96"/>
+            <line x1="346" y1="52" x2="356" y2="62"/><line x1="424" y1="130" x2="434" y2="140"/>
+            <line x1="346" y1="140" x2="356" y2="130"/><line x1="424" y1="62" x2="434" y2="52"/>
+          </g>
+        </g>
+        <circle cx="390" cy="96" r="58" stroke="rgba(251,191,36,.3)" stroke-width="1.5" stroke-dasharray="4 8"/>
+        <!-- rayos de energía sol -> panel -->
+        <path class="energy-flow" d="M362 128 L296 190" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+        <path class="energy-flow" d="M388 152 L330 214" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round" style="animation-delay:-.5s"/>
+        <!-- casa -->
+        <rect x="96" y="250" width="250" height="130" rx="6" fill="#16233B"/>
+        <rect x="96" y="250" width="250" height="130" rx="6" stroke="rgba(148,163,184,.25)"/>
+        <path d="M76 254 L221 168 L366 254 Z" fill="#1B2C49" stroke="rgba(148,163,184,.3)" stroke-width="1.5"/>
+        <!-- paneles en techo -->
+        <g transform="translate(128 196) rotate(-30.5 0 0)">
+          <rect x="0" y="0" width="150" height="64" rx="5" fill="#0E2A47" stroke="#38BDF8" stroke-opacity=".55" stroke-width="1.5"/>
+          <g stroke="rgba(56,189,248,.4)" stroke-width="1"><line x1="37" y1="0" x2="37" y2="64"/><line x1="75" y1="0" x2="75" y2="64"/><line x1="112" y1="0" x2="112" y2="64"/><line x1="0" y1="32" x2="150" y2="32"/></g>
+          <rect class="panel-shine" x="0" y="0" width="150" height="64" rx="5" fill="url(#shineGrad)"/>
+        </g>
+        <!-- ventanas iluminadas -->
+        <rect x="126" y="282" width="46" height="42" rx="4" fill="rgba(251,191,36,.16)" stroke="rgba(251,191,36,.45)"/>
+        <rect x="268" y="282" width="46" height="42" rx="4" fill="rgba(251,191,36,.16)" stroke="rgba(251,191,36,.45)"/>
+        <rect x="196" y="296" width="50" height="84" rx="4" fill="#0F1D33" stroke="rgba(148,163,184,.3)"/>
+        <circle cx="236" cy="340" r="3" fill="#FBBF24"/>
+        <!-- medidor bidireccional -->
+        <g transform="translate(360 300)">
+          <rect width="54" height="66" rx="8" fill="#0F1D33" stroke="rgba(52,211,153,.5)" stroke-width="1.5"/>
+          <circle cx="27" cy="24" r="13" stroke="#34D399" stroke-width="2" fill="none"/>
+          <path d="M27 15 v9 l6 4" stroke="#34D399" stroke-width="2" stroke-linecap="round"/>
+          <text x="27" y="54" text-anchor="middle" fill="#34D399" font-family="Inter" font-size="9" font-weight="700">CFE ↓↑</text>
+        </g>
+        <path class="energy-flow" d="M346 330 H322" stroke="#34D399" stroke-width="2.5" stroke-linecap="round" style="animation-delay:-.8s"/>
+        <!-- piso -->
+        <line x1="40" y1="382" x2="480" y2="382" stroke="rgba(148,163,184,.25)" stroke-width="2" stroke-linecap="round"/>
+        <defs>
+          <radialGradient id="sunGrad" cx=".35" cy=".35" r="1"><stop stop-color="#FDE68A"/><stop offset=".55" stop-color="#FBBF24"/><stop offset="1" stop-color="#D97706"/></radialGradient>
+          <linearGradient id="shineGrad" x1="0" y1="0" x2="150" y2="64"><stop stop-color="rgba(255,255,255,0)"/><stop offset=".5" stop-color="rgba(186,230,253,.35)"/><stop offset="1" stop-color="rgba(255,255,255,0)"/></linearGradient>
+        </defs>
+      </svg>
+      <div class="hero-float-card hfc-1"><div class="lbl">Ahorro promedio</div><div class="val num">−92% en CFE</div></div>
+      <div class="hero-float-card hfc-2"><div class="lbl">Retorno de inversión</div><div class="val num">3.2 años</div></div>
+    </div>
+  </div>
+  <div class="scroll-hint" aria-hidden="true">Desliza</div>
+</section>
+
+<!-- ============ STATS ============ -->
+<section id="stats" aria-label="Cifras de la empresa">
+  <div class="container stats-grid">
+    <div class="stat reveal"><div class="stat-num num"><span data-counter="850">0</span>+</div><div class="stat-lbl">Instalaciones realizadas</div></div>
+    <div class="stat reveal reveal-d1"><div class="stat-num num"><span data-counter="12">0</span> MW</div><div class="stat-lbl">Capacidad instalada</div></div>
+    <div class="stat reveal reveal-d2"><div class="stat-num num">$<span data-counter="96">0</span>M</div><div class="stat-lbl">Ahorrados por clientes</div></div>
+    <div class="stat reveal reveal-d3"><div class="stat-num num"><span data-counter="98">0</span>%</div><div class="stat-lbl">Clientes satisfechos</div></div>
+  </div>
+</section>
+
+<!-- ============ MARQUEE ============ -->
+<div id="marquee" aria-hidden="true">
+  <div class="marquee-track" id="marquee-track">
+    <span class="marquee-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Certificación FIDE</span>
+    <span class="marquee-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Interconexión CFE incluida</span>
+    <span class="marquee-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg> Garantía 25 años en paneles</span>
+    <span class="marquee-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Paneles Tier 1</span>
+    <span class="marquee-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Hasta 18 MSI</span>
+    <span class="marquee-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg> +850 familias con energía solar</span>
+  </div>
+</div>
+
+<!-- ============ COTIZADOR ============ -->
+<section id="cotizador" class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="kicker">Cotizador inteligente</span>
+      <h2>Tu cotización solar en 4 pasos</h2>
+      <p>Sin llamadas molestas, sin visitas innecesarias. Usa tu recibo de luz y la vista satelital de tu techo para obtener números reales.</p>
+    </div>
+    <div class="wizard reveal reveal-d1" id="wizard">
+      <div class="wizard-steps" role="tablist" aria-label="Pasos de la cotización">
+        <div class="wstep active" data-step="1"><span class="wnum">1</span><span class="wstep-label">Tu recibo</span></div>
+        <div class="wstep" data-step="2"><span class="wnum">2</span><span class="wstep-label">Tu techo</span></div>
+        <div class="wstep" data-step="3"><span class="wnum">3</span><span class="wstep-label">Tu ahorro</span></div>
+        <div class="wstep" data-step="4"><span class="wnum">4</span><span class="wstep-label">Tu propuesta</span></div>
+      </div>
+      <div class="wizard-body">
+
+        <!-- PASO 1: RECIBO -->
+        <div class="wpane active" id="pane-1">
+          <h3>¿Cuánto pagas de luz?</h3>
+          <p class="wdesc">Toma tu último recibo de CFE y ajusta el monto. Mientras más preciso, mejor tu cotización.</p>
+          <div class="bill-display">
+            <div class="bill-val num" id="bill-val">$3,500</div>
+            <div class="bill-per" id="bill-per">pesos al bimestre</div>
+          </div>
+          <label class="field-label" for="bill-range">Monto de tu recibo (MXN)</label>
+          <input type="range" id="bill-range" min="500" max="30000" step="100" value="3500" aria-label="Monto del recibo de luz en pesos">
+          <div class="range-labels"><span>$500</span><span>$30,000+</span></div>
+
+          <label class="field-label">Frecuencia de tu recibo</label>
+          <div class="chip-row" role="group" aria-label="Frecuencia del recibo">
+            <button class="chip selected" data-freq="2">Bimestral <small>(lo más común en casa)</small></button>
+            <button class="chip" data-freq="1">Mensual <small>(negocios y DAC)</small></button>
+          </div>
+
+          <label class="field-label">Tipo de tarifa CFE (viene en tu recibo)</label>
+          <div class="chip-row" role="group" aria-label="Tipo de tarifa">
+            <button class="chip selected" data-tariff="1">Doméstica (1, 1A-1F) <small>casa habitación</small></button>
+            <button class="chip" data-tariff="DAC">DAC <small>doméstica alto consumo</small></button>
+            <button class="chip" data-tariff="PDBT">PDBT <small>negocio pequeño</small></button>
+            <button class="chip" data-tariff="GDMT">GDMT <small>media tensión</small></button>
+            <button class="chip" data-tariff="NS">No lo sé <small>lo estimamos por ti</small></button>
+          </div>
+
+          <div class="mini-estimate" aria-live="polite">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span>Con este consumo podrías ahorrar aprox. <strong class="num" id="mini-saving">$38,000 al año</strong> con energía solar.</span>
+          </div>
+        </div>
+
+        <!-- PASO 2: MAPA -->
+        <div class="wpane" id="pane-2">
+          <h3>Encuentra tu techo en el mapa</h3>
+          <p class="wdesc">Busca tu dirección, luego presiona <strong>“Dibujar mi techo”</strong> y da clic en las esquinas de tu techo para medir el área disponible. Doble clic para terminar.</p>
+          <div class="map-toolbar">
+            <div class="map-search-wrap">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="map-search" placeholder="Ej. Av. Vallarta 1234, Guadalajara" autocomplete="street-address" aria-label="Buscar dirección">
+              <div class="search-results" id="search-results" role="listbox"></div>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="btn-draw">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+              Dibujar mi techo
+            </button>
+            <button class="btn btn-ghost btn-sm" id="btn-clear" hidden>Borrar trazo</button>
+          </div>
+          <div id="map" role="application" aria-label="Mapa satelital para ubicar tu techo"></div>
+          <div class="map-hint" id="map-hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span id="map-hint-text">Este paso es opcional: si no encuentras tu casa, puedes continuar y lo verificamos en la visita técnica gratuita.</span>
+          </div>
+          <div class="map-stats" id="map-stats" hidden>
+            <div class="map-stat"><div class="lbl">Área dibujada</div><div class="val num" id="stat-area">0 m²</div></div>
+            <div class="map-stat"><div class="lbl">Área necesaria</div><div class="val num" id="stat-needed">— m²</div></div>
+            <div class="map-stat" id="stat-fit-card"><div class="lbl">Veredicto</div><div class="val" id="stat-fit" style="font-size:16px">—</div></div>
+          </div>
+        </div>
+
+        <!-- PASO 3: RESULTADOS -->
+        <div class="wpane" id="pane-3">
+          <h3>Tu proyecto solar 🡒 en números</h3>
+          <p class="wdesc" id="results-intro">Esto es lo que necesitas para eliminar casi por completo tu recibo de CFE:</p>
+          <div class="results-grid">
+            <div class="result-card featured">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+              <div class="rlbl">Ahorro estimado</div>
+              <div class="rval num" id="r-saving">—</div>
+              <div class="rsub" id="r-saving-sub">al año en tu recibo</div>
+            </div>
+            <div class="result-card">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><line x1="3" y1="11" x2="21" y2="11"/><line x1="9" y1="4" x2="9" y2="18"/><line x1="15" y1="4" x2="15" y2="18"/></svg></div>
+              <div class="rlbl">Sistema recomendado</div>
+              <div class="rval num" id="r-system">—</div>
+              <div class="rsub" id="r-panels">—</div>
+            </div>
+            <div class="result-card">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg></div>
+              <div class="rlbl">Inversión estimada</div>
+              <div class="rval num" id="r-cost">—</div>
+              <div class="rsub">llave en mano, con instalación</div>
+            </div>
+            <div class="result-card">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+              <div class="rlbl">Recuperas tu inversión en</div>
+              <div class="rval num" id="r-payback">—</div>
+              <div class="rsub">después, todo es ganancia</div>
+            </div>
+            <div class="result-card">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+              <div class="rlbl">Ganancia a 25 años</div>
+              <div class="rval num" id="r-total25">—</div>
+              <div class="rsub">vs. seguir pagando CFE</div>
+            </div>
+            <div class="result-card">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg></div>
+              <div class="rlbl">Área de techo</div>
+              <div class="rval num" id="r-area">—</div>
+              <div class="rsub" id="r-area-sub">requerida para tus paneles</div>
+            </div>
+          </div>
+          <div class="env-row">
+            <span class="env-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22c4.97 0 9-4.03 9-9-4.97 0-9 4.03-9 9zM12 22c-4.97 0-9-4.03-9-9 4.97 0 9 4.03 9 9zM12 13V2M12 2L8 6M12 2l4 4"/></svg> Evitas <strong class="num" id="env-co2">—</strong> de CO₂ al año</span>
+            <span class="env-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-7M9 9a3 3 0 116 0c0 2-3 6-3 6s-3-4-3-6z" transform="translate(0 -2)"/><path d="M5 22h14"/></svg> Equivale a plantar <strong class="num" id="env-trees">—</strong> árboles</span>
+          </div>
+          <div class="chart-card">
+            <div class="chart-head">
+              <div>
+                <h4>Ahorro acumulado vs. tu inversión</h4>
+                <p>Proyección a 25 años considerando el aumento anual de tarifas CFE (~9%)</p>
+              </div>
+              <div class="chart-legend">
+                <span class="legend-item"><span class="legend-swatch" style="background:var(--chart-savings)"></span> Ahorro acumulado</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:var(--chart-invest)"></span> Tu inversión</span>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <svg id="savingsChart" viewBox="0 0 720 320" role="img" aria-label="Gráfica de ahorro acumulado contra inversión a 25 años"></svg>
+              <div class="chart-tooltip" id="chart-tooltip"></div>
+            </div>
+            <p class="disclaimer">* Estimación informativa basada en 5.5 horas solares pico promedio en México, eficiencia del sistema del 80% y tarifas CFE vigentes. La propuesta formal se confirma con visita técnica gratuita.</p>
+          </div>
+        </div>
+
+        <!-- PASO 4: CONTACTO -->
+        <div class="wpane" id="pane-4">
+          <h3>Recibe tu propuesta formal — gratis</h3>
+          <p class="wdesc">Un ingeniero validará tu cotización con visita técnica sin costo. Te contactamos por WhatsApp, sin spam.</p>
+          <div class="quote-summary" id="quote-summary">
+            <h4>Resumen de tu cotización</h4>
+            <div class="qs-row"><span>Sistema recomendado</span><b class="num" id="qs-system">—</b></div>
+            <div class="qs-row"><span>Inversión estimada</span><b class="num" id="qs-cost">—</b></div>
+            <div class="qs-row hl"><span>Ahorro anual estimado</span><b class="num" id="qs-saving">—</b></div>
+            <div class="qs-row"><span>Retorno de inversión</span><b class="num" id="qs-payback">—</b></div>
+          </div>
+          <div class="contact-grid">
+            <div class="form-field" id="ff-name">
+              <label for="lead-name">Nombre <span class="req">*</span></label>
+              <input type="text" id="lead-name" placeholder="Tu nombre" autocomplete="name">
+              <span class="err">Escribe tu nombre para personalizar tu propuesta.</span>
+            </div>
+            <div class="form-field" id="ff-phone">
+              <label for="lead-phone">WhatsApp / Teléfono <span class="req">*</span></label>
+              <input type="tel" id="lead-phone" placeholder="10 dígitos" autocomplete="tel" inputmode="numeric">
+              <span class="err">Necesitamos un teléfono de 10 dígitos para enviarte la propuesta.</span>
+            </div>
+            <div class="form-field">
+              <label for="lead-time">¿Cuándo te contactamos?</label>
+              <select id="lead-time">
+                <option>Lo antes posible</option>
+                <option>Por la mañana (9–12 h)</option>
+                <option>Por la tarde (12–18 h)</option>
+                <option>Por la noche (18–20 h)</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="lead-type">Tipo de propiedad</label>
+              <select id="lead-type">
+                <option>Casa</option>
+                <option>Negocio / local</option>
+                <option>Bodega / nave industrial</option>
+                <option>Terreno / otro</option>
+              </select>
+            </div>
+          </div>
+          <div class="final-ctas">
+            <button class="btn btn-wa" id="btn-send-wa">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.297-.497.1-.198.05-.371-.025-.52-.074-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Recibir propuesta por WhatsApp
+            </button>
+            <button class="btn btn-ghost" id="btn-print">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Guardar cotización (PDF)
+            </button>
+          </div>
+        </div>
+
+        <div class="wizard-nav">
+          <button class="btn btn-ghost btn-sm" id="btn-prev" style="visibility:hidden">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+            Anterior
+          </button>
+          <button class="btn btn-primary" id="btn-next">
+            Continuar
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BENEFICIOS ============ -->
+<section id="beneficios" class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="kicker">¿Por qué energía solar?</span>
+      <h2>Tu recibo de CFE nunca volverá a subir</h2>
+      <p>Las tarifas eléctricas en México aumentan en promedio 9% cada año. Con paneles solares, congelas tu costo de energía para siempre.</p>
+    </div>
+    <div class="benefits-grid">
+      <div class="benefit reveal">
+        <div class="b-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+        <h3>Ahorra hasta 98%</h3>
+        <p>Tu recibo baja al mínimo desde el primer bimestre. Clientes que pagaban $8,000 hoy pagan menos de $200.</p>
+      </div>
+      <div class="benefit reveal reveal-d1">
+        <div class="b-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+        <h3>Tu casa vale más</h3>
+        <p>Una propiedad con sistema solar aumenta su valor de venta entre 4% y 8%, y se vende más rápido.</p>
+      </div>
+      <div class="benefit reveal reveal-d2">
+        <div class="b-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></div>
+        <h3>Garantía real de 25 años</h3>
+        <p>Paneles Tier 1 con garantía de producción por 25 años e inversores garantizados por 10-12 años. Por escrito.</p>
+      </div>
+      <div class="benefit reveal">
+        <div class="b-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        <h3>Deducible de impuestos</h3>
+        <p>Si tienes actividad empresarial, deduces el 100% de tu inversión en el primer año (Art. 34 LISR).</p>
+      </div>
+      <div class="benefit reveal reveal-d1">
+        <div class="b-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4.97 0 9-4.03 9-9-4.97 0-9 4.03-9 9zM12 22c-4.97 0-9-4.03-9-9 4.97 0 9 4.03 9 9zM12 13V2M12 2L8 6M12 2l4 4"/></svg></div>
+        <h3>Energía limpia</h3>
+        <p>Un sistema residencial promedio evita 4 toneladas de CO₂ al año: como plantar 190 árboles.</p>
+      </div>
+      <div class="benefit reveal reveal-d2">
+        <div class="b-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <h3>Instalación en 1 día</h3>
+        <p>Nuestro equipo certificado instala tu sistema en un solo día. La interconexión con CFE la gestionamos nosotros.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROCESO ============ -->
+<section id="proceso" class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="kicker">Así de fácil</span>
+      <h2>De tu cotización a generar tu propia luz</h2>
+      <p>Nos encargamos de todo: ingeniería, instalación y trámites ante CFE.</p>
+    </div>
+    <div class="timeline">
+      <div class="tl-item reveal"><div class="tl-num">1</div><div class="tl-body"><h3>Cotiza en línea</h3><p>Usa el cotizador satelital de esta página. Obtienes números reales en 2 minutos, sin compromiso.</p><span class="tl-time">Hoy mismo</span></div></div>
+      <div class="tl-item reveal"><div class="tl-num">2</div><div class="tl-body"><h3>Visita técnica gratuita</h3><p>Un ingeniero valida tu techo, sombras, estructura y consumo real. Recibes propuesta formal con precio cerrado.</p><span class="tl-time">24–48 horas</span></div></div>
+      <div class="tl-item reveal"><div class="tl-num">3</div><div class="tl-body"><h3>Instalación profesional</h3><p>Equipo certificado, materiales Tier 1 y supervisión de ingeniería. Tu casa queda limpia y funcionando.</p><span class="tl-time">1 día</span></div></div>
+      <div class="tl-item reveal"><div class="tl-num">4</div><div class="tl-body"><h3>Interconexión con CFE</h3><p>Gestionamos el trámite de medidor bidireccional para que tus excedentes se abonen a tu recibo.</p><span class="tl-time">2–4 semanas</span></div></div>
+      <div class="tl-item reveal"><div class="tl-num">5</div><div class="tl-body"><h3>Empieza a ahorrar</h3><p>Monitoreas tu producción desde tu celular y recibes tu primer recibo con el nuevo (mini) monto.</p><span class="tl-time">25+ años de ahorro</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINANCIAMIENTO ============ -->
+<section id="financiamiento" class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="kicker">Formas de pago</span>
+      <h2>Empieza a ahorrar sin descapitalizarte</h2>
+      <p>Elige el plan que mejor se adapte a tu bolsillo. En muchos casos, tu mensualidad es menor que tu recibo actual de CFE.</p>
+    </div>
+    <div class="fin-grid">
+      <div class="fin-card reveal">
+        <h3>De contado</h3>
+        <p class="fin-sub">El mejor precio y retorno más rápido</p>
+        <div class="fin-big">−10% <small>de descuento</small></div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Precio preferencial inmediato</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Retorno de inversión desde 2.8 años</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Transferencia, tarjeta o efectivo</li>
+        </ul>
+        <a href="#cotizador" class="btn btn-ghost">Cotizar de contado</a>
+      </div>
+      <div class="fin-card popular reveal reveal-d1">
+        <span class="fin-tag">El más elegido</span>
+        <h3>Meses sin intereses</h3>
+        <p class="fin-sub">Con tarjetas participantes</p>
+        <div class="fin-big">18 MSI <small>tarjetas participantes</small></div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> 3, 6, 12 y hasta 18 meses</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Sin aval ni papeleo extra</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Empiezas a ahorrar desde el día 1</li>
+        </ul>
+        <a href="#cotizador" class="btn btn-primary">Cotizar a MSI</a>
+      </div>
+      <div class="fin-card reveal reveal-d2">
+        <h3>Financiamiento solar</h3>
+        <p class="fin-sub">Crédito verde a plazos largos</p>
+        <div class="fin-big">12–60 <small>meses, enganche flexible</small></div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Tu mensualidad ≈ lo que hoy pagas a CFE</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Aprobación en 48 horas</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Aplica para casas y negocios</li>
+        </ul>
+        <a href="#cotizador" class="btn btn-ghost">Simular crédito</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TESTIMONIOS ============ -->
+<section id="testimonios" class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="kicker">Clientes reales</span>
+      <h2>Ellos ya no le temen a su recibo</h2>
+    </div>
+    <div class="testi-viewport reveal reveal-d1">
+      <div class="testi-track" id="testi-track">
+        <div class="testi"><div class="testi-card">
+          <div class="stars" aria-label="5 de 5 estrellas"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></div>
+          <p class="testi-quote">“Pagaba $6,800 bimestrales en tarifa DAC. Desde que instalaron mis 12 paneles pago $118. La cotización del mapa fue casi exacta a lo que salió en la visita.”</p>
+          <div class="testi-person"><div class="testi-avatar">MG</div><div><div class="tp-name">María González</div><div class="tp-meta">Zapopan, Jalisco · <span class="tp-save num">ahorra $40,200/año</span></div></div></div>
+        </div></div>
+        <div class="testi"><div class="testi-card">
+          <div class="stars" aria-label="5 de 5 estrellas"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></div>
+          <p class="testi-quote">“En mi tortillería el recibo era mi segundo gasto más grande. Con el sistema de 15 kW lo deduje de impuestos y el crédito se paga solo con el ahorro.”</p>
+          <div class="testi-person"><div class="testi-avatar">JR</div><div><div class="tp-name">Jorge Ramírez</div><div class="tp-meta">Tlaquepaque, Jalisco · <span class="tp-save num">ahorra $9,400/mes</span></div></div></div>
+        </div></div>
+        <div class="testi"><div class="testi-card">
+          <div class="stars" aria-label="5 de 5 estrellas"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></div>
+          <p class="testi-quote">“Me daba miedo el trámite con CFE, pero ellos hicieron todo. Instalaron en un día, dejaron todo limpio y la app me muestra cuánta luz genero cada hora.”</p>
+          <div class="testi-person"><div class="testi-avatar">AL</div><div><div class="tp-name">Ana Lucía Torres</div><div class="tp-meta">Guadalajara, Jalisco · <span class="tp-save num">recibo de $8,200 a $180</span></div></div></div>
+        </div></div>
+      </div>
+    </div>
+    <div class="testi-nav">
+      <button class="testi-arrow" id="testi-prev" aria-label="Testimonio anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="testi-dots" id="testi-dots"></div>
+      <button class="testi-arrow" id="testi-next" aria-label="Siguiente testimonio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section id="faq" class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="kicker">Preguntas frecuentes</span>
+      <h2>Resolvemos tus dudas</h2>
+    </div>
+    <div class="faq-list reveal reveal-d1">
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">¿Qué pasa los días nublados o en la noche?<svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <div class="faq-a"><p>Sigues conectado a CFE con un medidor bidireccional: de día tus excedentes se van a la red como “crédito” y de noche los usas. El balance se hace en tu recibo, por eso pagas casi cero aunque no tengas baterías.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">¿Cuánto dura la instalación y quién hace el trámite con CFE?<svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <div class="faq-a"><p>La instalación física toma 1 día en la mayoría de las casas. El trámite de interconexión ante CFE lo gestionamos nosotros por ti; el cambio de medidor tarda entre 2 y 4 semanas.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">¿Qué mantenimiento necesitan los paneles?<svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <div class="faq-a"><p>Muy poco: una limpieza con agua 2-3 veces al año. No tienen partes móviles. Incluimos monitoreo desde tu celular para detectar cualquier baja de producción al instante.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">¿Y si mi techo es pequeño o tiene sombra?<svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <div class="faq-a"><p>Por eso nuestro cotizador te deja dibujar tu techo en el mapa satelital: verificamos que el área alcance. Con microinversores y paneles de alta eficiencia aprovechamos techos pequeños o con sombra parcial. La visita técnica gratuita lo confirma.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">¿Los paneles aguantan granizo y huracanes?<svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <div class="faq-a"><p>Sí. Los paneles Tier 1 están certificados para granizo de hasta 25 mm a 80 km/h y vientos de más de 200 km/h con la estructura adecuada. Además puedes asegurarlos en tu póliza de hogar.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false">¿Es real que se deduce de impuestos?<svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <div class="faq-a"><p>Sí: el Artículo 34, fracción XIII de la LISR permite deducir el 100% de la inversión en maquinaria para generación de energía renovable en el primer año, si tienes actividad empresarial. Tu contador lo va a amar.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA FINAL ============ -->
+<section id="cta-final" class="section">
+  <div class="container">
+    <div class="cta-box reveal">
+      <h2>Cada bimestre que esperas, CFE te lo cobra</h2>
+      <p>Tu cotización satelital es gratis, tarda 2 minutos y no te compromete a nada. El sol ya está pagando el recibo de +850 familias.</p>
+      <div class="hero-ctas">
+        <a href="#cotizador" class="btn btn-primary">Cotizar mi sistema ahora</a>
+        <button class="btn btn-wa" data-wa="final">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.297-.497.1-.198.05-.371-.025-.52-.074-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          WhatsApp directo
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <a href="#hero" class="logo"><svg viewBox="0 0 100 100" fill="none" aria-hidden="true" style="width:30px;height:30px"><circle cx="50" cy="50" r="26" fill="#F59E0B"/><g stroke="#F59E0B" stroke-width="7" stroke-linecap="round"><line x1="50" y1="6" x2="50" y2="18"/><line x1="50" y1="82" x2="50" y2="94"/><line x1="6" y1="50" x2="18" y2="50"/><line x1="82" y1="50" x2="94" y2="50"/><line x1="19" y1="19" x2="27" y2="27"/><line x1="73" y1="73" x2="81" y2="81"/><line x1="19" y1="81" x2="27" y2="73"/><line x1="73" y1="27" x2="81" y2="19"/></g></svg> Helios<em>Solar</em></a>
+        <p class="footer-desc">Instalamos sistemas solares llave en mano con garantía de 25 años. Cotiza en línea, ahorra de por vida.</p>
+        <div class="socials">
+          <a class="social-btn" href="https://facebook.com/" target="_blank" rel="noopener" aria-label="Facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+          <a class="social-btn" href="https://instagram.com/" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zm0 10.162a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+          <a class="social-btn" href="https://tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg></a>
+          <a class="social-btn" href="https://youtube.com/" target="_blank" rel="noopener" aria-label="YouTube"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+          <a class="social-btn" href="https://linkedin.com/" target="_blank" rel="noopener" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+          <a class="social-btn" href="https://x.com/" target="_blank" rel="noopener" aria-label="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Navegación</h4>
+        <ul>
+          <li><a href="#cotizador">Cotizador solar</a></li>
+          <li><a href="#beneficios">Beneficios</a></li>
+          <li><a href="#proceso">Nuestro proceso</a></li>
+          <li><a href="#financiamiento">Financiamiento</a></li>
+          <li><a href="#testimonios">Testimonios</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Soluciones</h4>
+        <ul>
+          <li><a href="#cotizador">Residencial</a></li>
+          <li><a href="#cotizador">Comercial / negocios</a></li>
+          <li><a href="#cotizador">Industrial</a></li>
+          <li><a href="#faq">Preguntas frecuentes</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contacto</h4>
+        <ul class="footer-contact">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg> <a href="tel:+523300000000">33 0000 0000</a></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> <a href="mailto:hola@heliossolar.mx">hola@heliossolar.mx</a></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg> Guadalajara, Jalisco, México</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Lun–Sáb · 9:00–19:00</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span id="year">2026</span> Helios Solar. Todos los derechos reservados.</span>
+      <span><a href="#">Aviso de privacidad</a> · <a href="#">Términos y condiciones</a></span>
+    </div>
+  </div>
+</footer>
+
+<!-- WHATSAPP FLOAT + STICKY CTA -->
+<div id="wa-float">
+  <button id="wa-btn" data-wa="float" aria-label="Chatear por WhatsApp">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.297-.497.1-.198.05-.371-.025-.52-.074-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </button>
+  <div id="wa-bubble">¿Dudas? Un asesor te responde en minutos ⚡</div>
+</div>
+<div id="sticky-cta"><a href="#cotizador" class="btn btn-primary">☀️ Cotizar mi ahorro gratis</a></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+'use strict';
+/* ================================================================
+   CONFIGURACIÓN DEL NEGOCIO — edita estos valores para tu empresa
+   ================================================================ */
+const CONFIG = {
+  business: {
+    name: 'Helios Solar',
+    whatsapp: '5213300000000',        // ← EDITAR: 52 + 1 + número a 10 dígitos
+    city: 'Guadalajara, Jalisco'
+  },
+  solar: {
+    hsp: 5.5,            // horas solares pico promedio en México
+    performance: 0.80,   // eficiencia global del sistema
+    panelWatts: 585,     // potencia por panel (W)
+    panelArea: 2.6,      // m² por panel incl. separación
+    costPerKwp: 24500,   // MXN por kWp instalado llave en mano
+    costSpread: 0.12,    // ± rango del precio
+    cfeInflation: 0.09,  // aumento anual tarifas CFE
+    coverage: 0.96,      // % del recibo que elimina el sistema
+    co2PerKwh: 0.438,    // kg CO2 por kWh (factor de emisión MX)
+    co2PerTree: 21       // kg CO2 absorbidos por árbol al año
+  },
+  tariffs: { // precio efectivo por kWh (MXN)
+    '1':    { label: 'Doméstica (1, 1A-1F)', price: 2.90 },
+    'DAC':  { label: 'DAC',                  price: 6.40 },
+    'PDBT': { label: 'PDBT (negocio)',       price: 5.70 },
+    'GDMT': { label: 'GDMT (media tensión)', price: 4.30 },
+    'NS':   { label: 'Por definir',          price: 3.80 }
+  }
+};
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const fmtMXN = n => '$' + Math.round(n).toLocaleString('es-MX');
+const fmtMXNk = n => n >= 1e6 ? '$' + (n/1e6).toFixed(1) + ' M' : fmtMXN(n);
+const clamp = (n,a,b) => Math.min(b, Math.max(a,n));
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ============ ESTADO DEL COTIZADOR ============ */
+const state = {
+  step: 1,
+  bill: 3500,
+  freq: 2,            // 2 = bimestral, 1 = mensual
+  tariff: '1',
+  roofArea: 0,        // m² dibujados
+  address: '',
+  results: null
+};
+
+/* ============ CÁLCULO SOLAR ============ */
+function computeResults(){
+  const s = CONFIG.solar;
+  const price = CONFIG.tariffs[state.tariff].price;
+  const monthlyBill = state.bill / state.freq;
+  const monthlyKwh = monthlyBill / price;
+  const kwhPerKwpMonth = s.hsp * 30 * s.performance;      // ≈132 kWh/kWp/mes
+  const kwp = Math.max(monthlyKwh / kwhPerKwpMonth, 0.5);
+  const panels = Math.max(2, Math.ceil(kwp * 1000 / s.panelWatts));
+  const realKwp = panels * s.panelWatts / 1000;
+  const areaNeeded = Math.round(panels * s.panelArea);
+  const cost = realKwp * s.costPerKwp;
+  const costLow = cost * (1 - s.costSpread), costHigh = cost * (1 + s.costSpread);
+  const monthlySaving = monthlyBill * s.coverage;
+  const annualSaving = monthlySaving * 12;
+  const payback = cost / annualSaving;
+  // proyección acumulada 25 años con inflación CFE
+  const cum = [0];
+  let yearSaving = annualSaving, acc = 0;
+  for (let y = 1; y <= 25; y++){ acc += yearSaving; cum.push(acc); yearSaving *= (1 + s.cfeInflation); }
+  const annualKwh = monthlyKwh * 12;
+  const co2Tons = annualKwh * s.co2PerKwh / 1000;
+  const trees = Math.round(annualKwh * s.co2PerKwh / s.co2PerTree);
+  return { monthlyBill, monthlyKwh, kwp: realKwp, panels, areaNeeded, cost, costLow, costHigh,
+           monthlySaving, annualSaving, payback, cum, total25: cum[25] - cost, co2Tons, trees };
+}
+
+/* ============ PRELOADER ============ */
+window.addEventListener('load', () => setTimeout(() => $('#preloader').classList.add('hide'), 400));
+setTimeout(() => $('#preloader').classList.add('hide'), 2600); // failsafe
+
+/* ============ NAV / SCROLL ============ */
+const nav = $('#nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', scrollY > 30);
+  const h = document.documentElement;
+  $('#scrollbar-progress').style.width = (scrollY / (h.scrollHeight - innerHeight) * 100) + '%';
+  $('#sticky-cta').classList.toggle('show', scrollY > innerHeight * .8 && !inCotizadorView());
+}, { passive: true });
+function inCotizadorView(){
+  const r = $('#cotizador').getBoundingClientRect();
+  return r.top < innerHeight && r.bottom > 0;
+}
+const burger = $('#hamburger'), mobileMenu = $('#mobile-menu');
+burger.addEventListener('click', () => {
+  const open = mobileMenu.classList.toggle('open');
+  burger.classList.toggle('open', open);
+  burger.setAttribute('aria-expanded', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+});
+mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+  mobileMenu.classList.remove('open'); burger.classList.remove('open'); document.body.style.overflow = '';
+}));
+
+/* ============ PARTÍCULAS HERO ============ */
+if (!reducedMotion){
+  const pc = $('#particles');
+  for (let i = 0; i < 18; i++){
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random()*100 + '%';
+    p.style.bottom = '-10px';
+    p.style.animationDuration = (9 + Math.random()*14) + 's';
+    p.style.animationDelay = (-Math.random()*20) + 's';
+    p.style.opacity = .15 + Math.random()*.4;
+    const sz = 3 + Math.random()*4; p.style.width = sz+'px'; p.style.height = sz+'px';
+    pc.appendChild(p);
+  }
+}
+
+/* ============ REVEAL ON SCROLL ============ */
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); } });
+}, { threshold: .12 });
+$$('.reveal').forEach(el => io.observe(el));
+
+/* ============ CONTADORES ============ */
+const cio = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    cio.unobserve(e.target);
+    const el = e.target, target = +el.dataset.counter, dur = 1600, t0 = performance.now();
+    if (reducedMotion){ el.textContent = target.toLocaleString('es-MX'); return; }
+    (function tick(t){
+      const p = clamp((t - t0)/dur, 0, 1), eased = 1 - Math.pow(1-p, 3);
+      el.textContent = Math.round(target*eased).toLocaleString('es-MX');
+      if (p < 1) requestAnimationFrame(tick);
+    })(t0);
+  });
+}, { threshold: .5 });
+$$('[data-counter]').forEach(el => cio.observe(el));
+
+/* ============ MARQUEE (duplicar contenido) ============ */
+$('#marquee-track').innerHTML += $('#marquee-track').innerHTML;
+
+/* ============ WIZARD ============ */
+const stepLabels = { 1:'Continuar', 2:'Ver mi ahorro', 3:'Quiero mi propuesta formal', 4:'' };
+function goStep(n){
+  state.step = clamp(n, 1, 4);
+  $$('.wpane').forEach(p => p.classList.remove('active'));
+  $('#pane-' + state.step).classList.add('active');
+  $$('.wstep').forEach(ws => {
+    const sn = +ws.dataset.step;
+    ws.classList.toggle('active', sn === state.step);
+    ws.classList.toggle('done', sn < state.step);
+  });
+  $('#btn-prev').style.visibility = state.step === 1 ? 'hidden' : 'visible';
+  $('#btn-next').style.display = state.step === 4 ? 'none' : 'inline-flex';
+  if (state.step < 4) $('#btn-next').childNodes[0].textContent = stepLabels[state.step] + ' ';
+  if (state.step === 2) initMapOnce();
+  if (state.step === 3) renderResults();
+  if (state.step === 4) renderSummary();
+  $('#wizard').scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+}
+$('#btn-next').addEventListener('click', () => goStep(state.step + 1));
+$('#btn-prev').addEventListener('click', () => goStep(state.step - 1));
+$$('.wstep').forEach(ws => ws.addEventListener('click', () => { if (+ws.dataset.step < state.step) goStep(+ws.dataset.step); }));
+
+/* ============ PASO 1 ============ */
+const billRange = $('#bill-range');
+function updateBillUI(){
+  state.bill = +billRange.value;
+  billRange.style.setProperty('--fill', ((state.bill - 500)/(30000 - 500) * 100) + '%');
+  $('#bill-val').textContent = fmtMXN(state.bill);
+  $('#bill-per').textContent = state.freq === 2 ? 'pesos al bimestre' : 'pesos al mes';
+  const r = computeResults();
+  $('#mini-saving').textContent = fmtMXN(r.annualSaving) + ' al año';
+}
+billRange.addEventListener('input', updateBillUI);
+$$('[data-freq]').forEach(ch => ch.addEventListener('click', () => {
+  $$('[data-freq]').forEach(c => c.classList.remove('selected'));
+  ch.classList.add('selected');
+  state.freq = +ch.dataset.freq;
+  updateBillUI();
+}));
+$$('[data-tariff]').forEach(ch => ch.addEventListener('click', () => {
+  $$('[data-tariff]').forEach(c => c.classList.remove('selected'));
+  ch.classList.add('selected');
+  state.tariff = ch.dataset.tariff;
+  updateBillUI();
+}));
+updateBillUI();
+
+/* ============ PASO 2 — MAPA SATELITAL ============ */
+let map, drawing = false, vertices = [], markers = [], polygon = null, mapReady = false;
+function initMapOnce(){
+  if (mapReady) return; mapReady = true;
+  map = L.map('map', { zoomControl: true, attributionControl: true }).setView([20.6597, -103.3496], 13); // GDL
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 20, attribution: 'Imagen satelital © Esri'
+  }).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+    maxZoom: 20, attribution: '© CARTO © OpenStreetMap', opacity: .9
+  }).addTo(map);
+  map.on('click', onMapClick);
+  map.on('dblclick', e => { if (drawing){ L.DomEvent.stop(e); finishDrawing(); } });
+  // geolocalización opcional
+  if (navigator.geolocation) navigator.geolocation.getCurrentPosition(
+    pos => map.setView([pos.coords.latitude, pos.coords.longitude], 18), () => {}, { timeout: 4000 });
+}
+/* Búsqueda de dirección (Nominatim / OpenStreetMap) */
+const searchInput = $('#map-search'), resultsBox = $('#search-results');
+let searchTimer = null;
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  const q = searchInput.value.trim();
+  if (q.length < 4){ resultsBox.classList.remove('open'); return; }
+  searchTimer = setTimeout(async () => {
+    try{
+      const res = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=mx&q=' + encodeURIComponent(q), { headers: { 'Accept-Language': 'es' } });
+      const data = await res.json();
+      resultsBox.innerHTML = '';
+      data.forEach(item => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = item.display_name;
+        b.setAttribute('role','option');
+        b.addEventListener('click', () => {
+          state.address = item.display_name;
+          map.setView([+item.lat, +item.lon], 19);
+          resultsBox.classList.remove('open');
+          searchInput.value = item.display_name.split(',').slice(0,3).join(',');
+          setHint('Perfecto. Ahora presiona “Dibujar mi techo” y marca las esquinas de tu techo.');
+        });
+        resultsBox.appendChild(b);
+      });
+      resultsBox.classList.toggle('open', data.length > 0);
+    }catch(err){ resultsBox.classList.remove('open'); }
+  }, 450);
+});
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); const f = resultsBox.querySelector('button'); if (f) f.click(); } });
+document.addEventListener('click', e => { if (!e.target.closest('.map-search-wrap')) resultsBox.classList.remove('open'); });
+
+function setHint(msg){ $('#map-hint-text').textContent = msg; }
+$('#btn-draw').addEventListener('click', () => {
+  if (!mapReady) return;
+  drawing = true;
+  clearDrawing();
+  map.doubleClickZoom.disable();
+  map.getContainer().style.cursor = 'crosshair';
+  $('#btn-clear').hidden = false;
+  setHint('Da clic en cada esquina de tu techo. Doble clic (o el botón de nuevo) para terminar.');
+  $('#btn-draw').innerHTML = '✓ Terminar trazo';
+  $('#btn-draw').dataset.mode = 'finish';
+});
+$('#btn-draw').addEventListener('click', function(){ if (this.dataset.mode === 'finish' && vertices.length >= 3 && drawing) finishDrawing(); });
+$('#btn-clear').addEventListener('click', () => { clearDrawing(); state.roofArea = 0; updateAreaStats(); });
+function onMapClick(e){
+  if (!drawing) return;
+  vertices.push(e.latlng);
+  const mk = L.marker(e.latlng, { icon: L.divIcon({ className: 'draw-vertex', iconSize: [14,14] }) }).addTo(map);
+  markers.push(mk);
+  redrawPolygon();
+}
+function redrawPolygon(){
+  if (polygon) map.removeLayer(polygon);
+  if (vertices.length >= 2){
+    polygon = L.polygon(vertices, { color: '#FBBF24', weight: 2.5, fillColor: '#F59E0B', fillOpacity: .28, dashArray: drawing ? '6 6' : null }).addTo(map);
+  }
+  if (vertices.length >= 3){ state.roofArea = polygonAreaM2(vertices); updateAreaStats(); }
+}
+function finishDrawing(){
+  drawing = false;
+  map.getContainer().style.cursor = '';
+  map.doubleClickZoom.enable();
+  $('#btn-draw').innerHTML = 'Dibujar de nuevo';
+  $('#btn-draw').dataset.mode = '';
+  redrawPolygon();
+  if (state.roofArea > 0) setHint('¡Listo! Área medida: ' + Math.round(state.roofArea) + ' m². Presiona “Ver mi ahorro” para continuar.');
+}
+function clearDrawing(){
+  vertices = [];
+  markers.forEach(m => map.removeLayer(m)); markers = [];
+  if (polygon){ map.removeLayer(polygon); polygon = null; }
+}
+/* Área del polígono en m² (proyección local equirectangular + shoelace) */
+function polygonAreaM2(latlngs){
+  const R = 6378137, lat0 = latlngs.reduce((a,p) => a + p.lat, 0) / latlngs.length * Math.PI/180;
+  const pts = latlngs.map(p => [ R * p.lng * Math.PI/180 * Math.cos(lat0), R * p.lat * Math.PI/180 ]);
+  let area = 0;
+  for (let i = 0; i < pts.length; i++){
+    const [x1,y1] = pts[i], [x2,y2] = pts[(i+1) % pts.length];
+    area += x1*y2 - x2*y1;
+  }
+  return Math.abs(area/2);
+}
+function updateAreaStats(){
+  const r = computeResults();
+  const has = state.roofArea > 2;
+  $('#map-stats').hidden = !has;
+  if (!has) return;
+  $('#stat-area').textContent = Math.round(state.roofArea) + ' m²';
+  $('#stat-needed').textContent = r.areaNeeded + ' m²';
+  const usable = state.roofArea * .85; // margen por sombras/orillas
+  const fits = usable >= r.areaNeeded;
+  const card = $('#stat-fit-card');
+  card.classList.toggle('ok', fits); card.classList.toggle('warn', !fits);
+  $('#stat-fit').textContent = fits ? '✓ Tu techo es suficiente' : 'Ajustaremos el diseño en la visita';
+}
+
+/* ============ PASO 3 — RESULTADOS + GRÁFICA ============ */
+function renderResults(){
+  const r = state.results = computeResults();
+  $('#r-saving').textContent = fmtMXN(r.annualSaving);
+  $('#r-saving-sub').textContent = 'al año · ' + fmtMXN(r.monthlySaving) + ' al mes';
+  $('#r-system').textContent = r.kwp.toFixed(2) + ' kWp';
+  $('#r-panels').textContent = r.panels + ' paneles de ' + CONFIG.solar.panelWatts + ' W';
+  $('#r-cost').textContent = fmtMXNk(r.costLow) + ' – ' + fmtMXNk(r.costHigh);
+  $('#r-payback').textContent = r.payback.toFixed(1) + ' años';
+  $('#r-total25').textContent = '+' + fmtMXNk(r.total25);
+  if (state.roofArea > 2){
+    $('#r-area').textContent = Math.round(state.roofArea) + ' m² disponibles';
+    $('#r-area-sub').textContent = 'necesitas ' + r.areaNeeded + ' m² — ' + (state.roofArea*.85 >= r.areaNeeded ? '¡sí caben!' : 'lo optimizamos en la visita');
+  } else {
+    $('#r-area').textContent = r.areaNeeded + ' m²';
+    $('#r-area-sub').textContent = 'requeridos (lo verificamos en la visita gratuita)';
+  }
+  $('#env-co2').textContent = r.co2Tons.toFixed(1) + ' toneladas';
+  $('#env-trees').textContent = r.trees.toLocaleString('es-MX');
+  drawChart(r);
+}
+
+/* Gráfica SVG: ahorro acumulado (área ámbar) vs inversión (línea azul) */
+function drawChart(r){
+  const svg = $('#savingsChart');
+  const W = 720, H = 320, padL = 74, padR = 26, padT = 24, padB = 40;
+  const iw = W - padL - padR, ih = H - padT - padB;
+  const maxY = Math.max(r.cum[25], r.cost) * 1.08;
+  const X = y => padL + (y/25) * iw;
+  const Y = v => padT + ih - (v/maxY) * ih;
+  const beY = r.cum.findIndex(v => v >= r.cost); // año de break-even
+  let el = '';
+  // grid + eje Y
+  for (let i = 0; i <= 4; i++){
+    const v = maxY * i/4, y = Y(v);
+    el += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="rgba(148,163,184,.12)" stroke-width="1"/>`;
+    el += `<text x="${padL-10}" y="${y+4}" text-anchor="end" fill="#7C8BA1" font-size="11" font-family="Inter">${fmtMXNk(v)}</text>`;
+  }
+  // eje X
+  for (let y = 0; y <= 25; y += 5){
+    el += `<text x="${X(y)}" y="${H-14}" text-anchor="middle" fill="#7C8BA1" font-size="11" font-family="Inter">${y === 0 ? 'Hoy' : 'Año ' + y}</text>`;
+  }
+  // área de ahorro
+  let dArea = `M ${X(0)} ${Y(0)}`;
+  for (let y = 1; y <= 25; y++) dArea += ` L ${X(y)} ${Y(r.cum[y])}`;
+  dArea += ` L ${X(25)} ${Y(0)} Z`;
+  el += `<defs><linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#D97706" stop-opacity=".45"/><stop offset="1" stop-color="#D97706" stop-opacity=".04"/></linearGradient></defs>`;
+  el += `<path d="${dArea}" fill="url(#areaGrad)"/>`;
+  let dLine = `M ${X(0)} ${Y(0)}`;
+  for (let y = 1; y <= 25; y++) dLine += ` L ${X(y)} ${Y(r.cum[y])}`;
+  el += `<path d="${dLine}" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  // línea de inversión
+  el += `<line x1="${X(0)}" y1="${Y(r.cost)}" x2="${X(25)}" y2="${Y(r.cost)}" stroke="#0284C7" stroke-width="2" stroke-dasharray="7 6"/>`;
+  el += `<text x="${X(25)}" y="${Y(r.cost)-8}" text-anchor="end" fill="#38BDF8" font-size="11.5" font-weight="600" font-family="Inter">Inversión ${fmtMXNk(r.cost)}</text>`;
+  // punto break-even
+  if (beY > 0){
+    el += `<circle cx="${X(beY)}" cy="${Y(r.cum[beY])}" r="6" fill="#FBBF24" stroke="#070B14" stroke-width="2.5"/>`;
+    el += `<text x="${X(beY)}" y="${Y(r.cum[beY])-14}" text-anchor="middle" fill="#FBBF24" font-size="11.5" font-weight="700" font-family="Inter">Recuperas tu inversión</text>`;
+  }
+  // etiqueta final de la serie
+  el += `<text x="${X(25)-4}" y="${Y(r.cum[25])+16}" text-anchor="end" fill="#F1F5F9" font-size="12" font-weight="700" font-family="Inter">${fmtMXNk(r.cum[25])} ahorrados</text>`;
+  // capa de hover
+  el += `<rect id="chart-hit" x="${padL}" y="${padT}" width="${iw}" height="${ih}" fill="transparent"/>`;
+  el += `<g id="crosshair" style="display:none"><line id="ch-line" y1="${padT}" y2="${padT+ih}" stroke="rgba(241,245,249,.35)" stroke-width="1" stroke-dasharray="3 4"/><circle id="ch-dot" r="5" fill="#FBBF24" stroke="#070B14" stroke-width="2"/></g>`;
+  svg.innerHTML = el;
+  // tooltip interactivo
+  const tt = $('#chart-tooltip'), hit = svg.querySelector('#chart-hit'),
+        cross = svg.querySelector('#crosshair'), chLine = svg.querySelector('#ch-line'), chDot = svg.querySelector('#ch-dot');
+  function onMove(ev){
+    const rect = svg.getBoundingClientRect();
+    const cx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left;
+    const yr = clamp(Math.round(((cx * (W/rect.width)) - padL) / iw * 25), 0, 25);
+    const px = X(yr), py = Y(r.cum[yr]);
+    cross.style.display = '';
+    chLine.setAttribute('x1', px); chLine.setAttribute('x2', px);
+    chDot.setAttribute('cx', px); chDot.setAttribute('cy', py);
+    tt.style.opacity = 1;
+    const wrapRect = svg.parentElement.getBoundingClientRect();
+    const ttx = clamp(px/W * wrapRect.width + 14, 0, wrapRect.width - 190);
+    tt.style.left = ttx + 'px';
+    tt.style.top = (py/H * wrapRect.height - 10) + 'px';
+    tt.innerHTML = `<div class="tt-year">${yr === 0 ? 'Hoy' : 'Año ' + yr}</div>
+      <div class="tt-row"><span>Ahorro acum.</span><b class="num">${fmtMXN(r.cum[yr])}</b></div>
+      <div class="tt-row"><span>Inversión</span><b class="num">${fmtMXN(r.cost)}</b></div>
+      <div class="tt-row"><span>Balance</span><b class="num" style="color:${r.cum[yr] >= r.cost ? 'var(--success)' : 'var(--danger)'}">${fmtMXN(r.cum[yr] - r.cost)}</b></div>`;
+  }
+  hit.addEventListener('mousemove', onMove);
+  hit.addEventListener('touchmove', onMove, { passive: true });
+  ['mouseleave','touchend'].forEach(evn => hit.addEventListener(evn, () => { tt.style.opacity = 0; cross.style.display = 'none'; }));
+}
+
+/* ============ PASO 4 — RESUMEN + WHATSAPP ============ */
+function renderSummary(){
+  const r = state.results || computeResults();
+  $('#qs-system').textContent = r.kwp.toFixed(2) + ' kWp · ' + r.panels + ' paneles';
+  $('#qs-cost').textContent = fmtMXNk(r.costLow) + ' – ' + fmtMXNk(r.costHigh);
+  $('#qs-saving').textContent = fmtMXN(r.annualSaving);
+  $('#qs-payback').textContent = r.payback.toFixed(1) + ' años';
+}
+function buildWaMessage(full){
+  const r = state.results || computeResults();
+  const name = $('#lead-name').value.trim();
+  const type = $('#lead-type') ? $('#lead-type').value : '';
+  const time = $('#lead-time') ? $('#lead-time').value : '';
+  if (!full) return '¡Hola! Vengo de su página web y quiero información sobre paneles solares. 🌞';
+  return [
+    '¡Hola! 🌞 Acabo de cotizar en su página web y quiero mi propuesta formal.',
+    '',
+    '*Mi cotización:*',
+    '• Nombre: ' + (name || 'Sin nombre'),
+    '• Propiedad: ' + type,
+    '• Recibo: ' + fmtMXN(state.bill) + (state.freq === 2 ? ' bimestral' : ' mensual') + ' (tarifa ' + CONFIG.tariffs[state.tariff].label + ')',
+    '• Sistema sugerido: ' + r.kwp.toFixed(2) + ' kWp (' + r.panels + ' paneles)',
+    '• Ahorro estimado: ' + fmtMXN(r.annualSaving) + '/año',
+    '• Inversión estimada: ' + fmtMXNk(r.costLow) + ' – ' + fmtMXNk(r.costHigh),
+    state.roofArea > 2 ? '• Área de techo medida: ' + Math.round(state.roofArea) + ' m²' : null,
+    state.address ? '• Dirección aprox.: ' + state.address : null,
+    '• Contactarme: ' + time,
+    '',
+    '¿Me agendan mi visita técnica gratuita? 🙌'
+  ].filter(Boolean).join('\n');
+}
+function openWa(msg){
+  window.open('https://wa.me/' + CONFIG.business.whatsapp + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+}
+$$('[data-wa]').forEach(b => b.addEventListener('click', () => openWa(buildWaMessage(false))));
+$('#btn-send-wa').addEventListener('click', () => {
+  const nameF = $('#ff-name'), phoneF = $('#ff-phone');
+  const name = $('#lead-name').value.trim();
+  const phone = $('#lead-phone').value.replace(/\D/g,'');
+  let ok = true;
+  nameF.classList.toggle('invalid', !name); if (!name) ok = false;
+  phoneF.classList.toggle('invalid', phone.length < 10); if (phone.length < 10) ok = false;
+  if (!ok){ (name ? $('#lead-phone') : $('#lead-name')).focus(); return; }
+  openWa(buildWaMessage(true) + '\n📱 Mi teléfono: ' + phone);
+});
+['lead-name','lead-phone'].forEach(id => $('#'+id).addEventListener('input', e => e.target.closest('.form-field').classList.remove('invalid')));
+$('#btn-print').addEventListener('click', () => { renderSummary(); window.print(); });
+
+/* ============ TESTIMONIOS ============ */
+(function(){
+  const track = $('#testi-track'), slides = track.children.length, dotsBox = $('#testi-dots');
+  let idx = 0, timer;
+  for (let i = 0; i < slides; i++){
+    const d = document.createElement('button');
+    d.className = 'testi-dot' + (i === 0 ? ' active' : '');
+    d.setAttribute('aria-label', 'Ir al testimonio ' + (i+1));
+    d.addEventListener('click', () => go(i, true));
+    dotsBox.appendChild(d);
+  }
+  function go(n, manual){
+    idx = (n + slides) % slides;
+    track.style.transform = 'translateX(-' + idx*100 + '%)';
+    dotsBox.querySelectorAll('.testi-dot').forEach((d,i) => d.classList.toggle('active', i === idx));
+    if (manual) restart();
+  }
+  function restart(){ clearInterval(timer); if (!reducedMotion) timer = setInterval(() => go(idx+1), 6500); }
+  $('#testi-prev').addEventListener('click', () => go(idx-1, true));
+  $('#testi-next').addEventListener('click', () => go(idx+1, true));
+  restart();
+})();
+
+/* ============ FAQ ============ */
+$$('.faq-item').forEach(item => {
+  const q = item.querySelector('.faq-q'), a = item.querySelector('.faq-a');
+  q.addEventListener('click', () => {
+    const open = item.classList.contains('open');
+    $$('.faq-item').forEach(i => { i.classList.remove('open'); i.querySelector('.faq-a').style.maxHeight = null; i.querySelector('.faq-q').setAttribute('aria-expanded','false'); });
+    if (!open){ item.classList.add('open'); a.style.maxHeight = a.scrollHeight + 'px'; q.setAttribute('aria-expanded','true'); }
+  });
+});
+
+/* ============ WA BUBBLE ============ */
+setTimeout(() => { $('#wa-bubble').classList.add('show'); setTimeout(() => $('#wa-bubble').classList.remove('show'), 7000); }, 9000);
+
+$('#year').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
